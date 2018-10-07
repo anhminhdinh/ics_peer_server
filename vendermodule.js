@@ -48,6 +48,7 @@ module.exports = function() {
       failureCallback();
     });
     */
+    successCallback(token);
   };
 
   return {authentication:authentication};
