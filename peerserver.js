@@ -47,12 +47,12 @@ var ios = require('socket.io').listen(servers);
 var sessionMap = {};  // Key is uid, and value is session object.
 
 // Check user's token from partner
-function validateUser(token, successCallback, failureCallback){
+function validateUser(token, successCallback, failureCallback) {
   // TODO: Should check token first, replace this block when engagement with different partners.
-  if(token){
-    account.authentication(token,function(uid){
+  if (token) {
+    account.authentication(token, function (uid) {
       successCallback(uid);
-    },function(){
+    }, function () {
       console.log('Account system return false.');
       failureCallback(0);
     });
@@ -61,101 +61,105 @@ function validateUser(token, successCallback, failureCallback){
     failureCallback(0);
 }
 
-function disconnectClient(uid){
-  if(sessionMap[uid]!==undefined){
-    var session=sessionMap[uid];
+function disconnectClient(uid) {
+  if (sessionMap[uid] !== undefined) {
+    var session = sessionMap[uid];
     session.emit('server-disconnect');
     session.disconnect();
-    console.log('Force disconnected '+uid);
+    console.log('Force disconnected ' + uid);
   }
 }
 
-function createUuid(){
-  return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+function createUuid() {
+  return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
 
-function emitChatEvent(targetUid, eventName, message, successCallback, failureCallback){
-  if(sessionMap[targetUid]){
-    sessionMap[targetUid].emit(eventName,message);
-    if(successCallback)
+function emitChatEvent(targetUid, eventName, message, successCallback, failureCallback) {
+  if (sessionMap[targetUid]) {
+    sessionMap[targetUid].emit(eventName, message);
+    if (successCallback)
       successCallback();
   }
   else
-    if(failureCallback)
+    if (failureCallback)
       failureCallback(2201);
 }
 
-function authorization(socket, next){
-  var query=url.parse(socket.request.url,true).query;
-  var token=query.token;
-  var clientVersion=query.clientVersion;
-  var clientType=query.clientType;
-  switch(clientVersion){
+function authorization(socket, next) {
+  var query = url.parse(socket.request.url, true).query;
+  var token = query.token;
+  var clientVersion = query.clientVersion;
+  var clientType = query.clientType;
+  switch (clientVersion) {
     case '4.0':
     case '4.0.1':
     case '4.0.2':
       // socket.user stores session related information.
-      if(token){
-        validateUser(token, function(uid){  // Validate user's token successfully.
-          socket.user={id:uid};
-          console.log(uid+' authentication passed.');
+      if (token) {
+        validateUser(token, function (json_data) {  // Validate user's token successfully.
+          socket.user = { 
+            id: json_data.userID,
+            gameID: json_data.gameID,
+            nick: json_data.nickName
+          };
+          console.log(socket.user.nick + ' authentication passed.');
           onConnection(socket);
-        },function(error){
-            // Invalid login.
-            console.log('Authentication failed.');
-            next();
+        }, function (error) {
+          // Invalid login.
+          console.log('Authentication failed.');
+          next();
         });
-      }else{
-        socket.user=new Object();
-        socket.user.id=createUuid()+'@anonymous';
+      } else {
+        socket.user = new Object();
+        socket.user.nick = createUuid() + '@anonymous';
         onConnection(socket);
-        console.log('Anonymous user: '+socket.user.id);
+        console.log('Anonymous user: ' + socket.user.nick);
       }
       next();
       break;
     default:
       next(new Error('2103'));
-      console.log('Unsupported client. Client version: '+query.clientVersion);
+      console.log('Unsupported client. Client version: ' + query.clientVersion);
       break;
   }
 }
 
-function onConnection(socket){
+function onConnection(socket) {
   // Disconnect previous session if this user already signed in.
-  var uid=socket.user.id;
+  var uid = socket.user.id;
   disconnectClient(uid);
-  sessionMap[uid]=socket;
-  socket.emit('server-authenticated',{uid:uid});  // Send current user's id to client.
-  console.log('A new client has connected with id:' + uid + '. Online user number: '+Object.keys(sessionMap).length);
+  sessionMap[uid] = socket;
+  socket.emit('server-authenticated', { uid: uid });  // Send current user's id to client.
+  console.log('A new client has connected with id:' + uid + '. Online user number: ' + Object.keys(sessionMap).length);
 
-  socket.on('disconnect',function(){
-    if(socket.user){
-      var uid=socket.user.id;
+  socket.on('disconnect', function () {
+    if (socket.user) {
+      var uid = socket.user.id;
       // Delete session
-      if(socket===sessionMap[socket.user.id]){
+      if (socket === sessionMap[socket.user.id]) {
         delete sessionMap[socket.user.id];
       }
-      console.log(uid+' has disconnected. Online user number: '+Object.keys(sessionMap).length);
+      console.log(uid + ' has disconnected. Online user number: ' + Object.keys(sessionMap).length);
     }
   });
 
   // Forward events
-  var forwardEvents=['ics-message'];
-  for (var i=0;i<forwardEvents.length;i++){
-    socket.on(forwardEvents[i],(function(i){
-      return function(data, ackCallback){
-        console.log('Received '+forwardEvents[i]+': '+JSON.stringify(data));
-        data.from=socket.user.id;
-        var to=data.to;
+  var forwardEvents = ['ics-message'];
+  for (var i = 0; i < forwardEvents.length; i++) {
+    socket.on(forwardEvents[i], (function (i) {
+      return function (data, ackCallback) {
+        console.log('Received ' + forwardEvents[i] + ': ' + JSON.stringify(data));
+        data.from = socket.user.id;
+        var to = data.to;
         delete data.to;
-        emitChatEvent(to,forwardEvents[i],data,function(){
-          if(ackCallback)
+        emitChatEvent(to, forwardEvents[i], data, function () {
+          if (ackCallback)
             ackCallback();
-        },function(errorCode){
-          if(ackCallback)
+        }, function (errorCode) {
+          if (ackCallback)
             ackCallback(errorCode);
         });
       };

@@ -25,9 +25,9 @@
  */
 const http = require('http');
 
-module.exports = function() {
+module.exports = function () {
   // successCallback should contains a parameter uid
-  var authentication = function(token, successCallback, failureCallback) {
+  var authentication = function (token, successCallback, failureCallback) {
     const url = 'http://test.auth.lunipark.com/Game/GetPlayInfo?sessionCode=' + token;
     console.log("Calling: " + url);
     http.get(url, (resp) => {
@@ -41,18 +41,18 @@ module.exports = function() {
       // The whole response has been received. Print out the result.
       resp.on('end', () => {
         console.log(data);
-        var json_data = JSON.parse(data); 
+        var json_data = JSON.parse(data);
         console.log(json_data);
-        successCallback(json_data.Result.nickName);
+        successCallback(json_data);
       });
 
     }).on("error", (err) => {
       console.log("Error: " + err.message);
       failureCallback();
     });
-    
-    
+
+
   };
 
-  return {authentication:authentication};
+  return { authentication: authentication };
 }();
