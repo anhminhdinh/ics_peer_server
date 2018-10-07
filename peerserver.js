@@ -124,6 +124,7 @@ function authorization(socket, next){
 function onConnection(socket){
   // Disconnect previous session if this user already signed in.
   var uid=socket.user.id;
+  console.log(socket.user);
   disconnectClient(uid);
   sessionMap[uid]=socket;
   socket.emit('server-authenticated',{uid:uid});  // Send current user's id to client.
