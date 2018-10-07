@@ -43,7 +43,13 @@ module.exports = function () {
         console.log(data);
         var json_data = JSON.parse(data);
         console.log(json_data);
-        successCallback(json_data);
+        if (json_data.Result.success) {
+          successCallback(json_data.Result);
+        }
+        else {
+          console.log("Error: " + json_data.ErrorMessage);
+          failureCallback();
+        }
       });
 
     }).on("error", (err) => {
