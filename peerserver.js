@@ -102,6 +102,7 @@ function authorization(socket, next){
         validateUser(token, function(uid){  // Validate user's token successfully.
           socket.user={id:uid};
           console.log(uid+' authentication passed.');
+          onConnection(socket);
         },function(error){
             // Invalid login.
             console.log('Authentication failed.');
@@ -110,6 +111,7 @@ function authorization(socket, next){
       }else{
         socket.user=new Object();
         socket.user.id=createUuid()+'@anonymous';
+        onConnection(socket);
         console.log('Anonymous user: '+socket.user.id);
       }
       next();
@@ -165,7 +167,7 @@ function onConnection(socket){
 
 function listen(io) {
   io.use(authorization);
-  io.on('connection',onConnection);
+  // io.on('connection',onConnection);
 }
 
 listen(io);
