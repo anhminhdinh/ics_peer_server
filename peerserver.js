@@ -25,6 +25,7 @@
  */
 
 // Prepare for web server
+const https = require('https');
 var fs = require("fs");
 var path = require("path");
 var url = require('url');

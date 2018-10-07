@@ -27,8 +27,24 @@
 module.exports = function() {
   // successCallback should contains a parameter uid
   var authentication = function(token, successCallback, failureCallback) {
-    // TODO: Please overwrite this method for authentication.
-    successCallback(token);
+    https.get('http://test.auth.lunipark.com/Game/GetPlayInfo?sessionCode=' + token, (resp) => {
+      let data = '';
+
+      // A chunk of data has been recieved.
+      resp.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      // The whole response has been received. Print out the result.
+      resp.on('end', () => {
+        console.log(JSON.parse(data).explanation);
+        successCallback(token);
+      });
+
+    }).on("error", (err) => {
+      console.log("Error: " + err.message);
+      failureCallback();
+    });
   };
 
   return {authentication:authentication};
