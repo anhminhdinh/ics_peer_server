@@ -28,8 +28,9 @@ const http = require('http');
 module.exports = function() {
   // successCallback should contains a parameter uid
   var authentication = function(token, successCallback, failureCallback) {
-    
-    http.get('http://test.auth.lunipark.com/Game/GetPlayInfo?sessionCode=' + token, (resp) => {
+    const url = 'http://test.auth.lunipark.com/Game/GetPlayInfo?sessionCode=' + token;
+    console.log("Calling: " + url);
+    http.get(url, (resp) => {
       let data = '';
 
       // A chunk of data has been recieved.
@@ -39,6 +40,7 @@ module.exports = function() {
 
       // The whole response has been received. Print out the result.
       resp.on('end', () => {
+        console.log(data);
         console.log(JSON.parse(data).explanation);
         // successCallback(token);
       });
