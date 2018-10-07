@@ -41,8 +41,9 @@ module.exports = function() {
       // The whole response has been received. Print out the result.
       resp.on('end', () => {
         console.log(data);
-        console.log(JSON.parse(data).explanation);
-        // successCallback(token);
+        var json_data = JSON.parse(data); 
+        console.log(json_data);
+        successCallback(json_data.Result.nickName);
       });
 
     }).on("error", (err) => {
@@ -50,7 +51,7 @@ module.exports = function() {
       failureCallback();
     });
     
-    successCallback(token);
+    
   };
 
   return {authentication:authentication};
